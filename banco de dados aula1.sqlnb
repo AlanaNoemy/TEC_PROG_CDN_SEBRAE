@@ -1,0 +1,22 @@
+cells:
+  - kind: 2
+    value: "create table employees (\r
+
+      \    employee_id NUMBER PRIMARY KEY,\r
+
+      \    first_name VARCHAR2(50),\r
+
+      \    last_name VARCHAR2(50) NOT NULL,\r
+
+      \    email VARCHAR2(100) UNIQUE NOT NULL,\r
+
+      \    hire_date DATE NOT NULL,\r
+
+      \    job_id VARCHAR2(10) NOT NULL,\r
+
+      \    salary NUMBER(8, 2),\r
+
+      \    department_id NUMBER\r
+
+      );"
+    languageId: oracle-sql
