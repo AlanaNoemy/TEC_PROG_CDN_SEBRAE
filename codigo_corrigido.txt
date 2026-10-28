@@ -1,0 +1,372 @@
+
+-- =========================================
+-- 1. CRIAR O BANCO DE DADOS
+-- =========================================
+
+DROP DATABASE IF EXISTS Consultoria;
+CREATE DATABASE Consultoria;
+USE Consultoria;
+
+
+-- =========================================
+-- 2. CRIAR A TABELA CARGO
+-- =========================================
+
+CREATE TABLE Cargo (
+    id_cargo INT PRIMARY KEY AUTO_INCREMENT,
+    nome_cargo VARCHAR(100) NOT NULL UNIQUE,
+    descricao VARCHAR(30),
+    salario_base DECIMAL(10,2) NOT NULL,
+    CHECK (salario_base > 0)
+);
+
+
+-- =========================================
+-- 3. CRIAR A TABELA CONSULTOR
+-- =========================================
+
+CREATE TABLE Consultor (
+    id_consultor INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    cpf CHAR(11) NOT NULL UNIQUE,
+    especialidade VARCHAR(100),
+    id_cargo INT NOT NULL,
+
+    CONSTRAINT FK_Consultor_Cargo
+        FOREIGN KEY (id_cargo)
+        REFERENCES Cargo(id_cargo)
+);
+
+
+-- =========================================
+-- 4. CRIAR A TABELA CLIENTE
+-- =========================================
+
+CREATE TABLE Cliente (
+    id_cliente INT PRIMARY KEY AUTO_INCREMENT,
+    razao_social VARCHAR(150) NOT NULL,
+    cnpj CHAR(14) NOT NULL UNIQUE
+);
+
+
+-- =========================================
+-- 5. CRIAR A TABELA PROJETO
+-- =========================================
+
+CREATE TABLE Projeto (
+    id_projeto INT PRIMARY KEY AUTO_INCREMENT,
+    nome_projeto VARCHAR(150) NOT NULL UNIQUE,
+    valor_total_projeto DECIMAL(12,2) NOT NULL,
+    data_inicio DATE NOT NULL,
+    data_fim DATE,
+
+    CHECK (valor_total_projeto >= 0),
+    CHECK (data_fim IS NULL OR data_fim >= data_inicio)
+);
+
+
+-- =========================================
+-- 6. CRIAR A TABELA DE LIGACAO
+-- =========================================
+
+CREATE TABLE Consultor_Projeto (
+    id_alocacao INT PRIMARY KEY AUTO_INCREMENT,
+    id_consultor INT NOT NULL,
+    id_cliente INT NOT NULL,
+    id_projeto INT NOT NULL,
+    horas_alocadas INT NOT NULL,
+    valor_agregado DECIMAL(12,2) NOT NULL DEFAULT 0,
+
+    CHECK (horas_alocadas >= 0),
+    CHECK (valor_agregado >= 0),
+
+    CONSTRAINT FK_CP_Consultor
+        FOREIGN KEY (id_consultor)
+        REFERENCES Consultor(id_consultor),
+
+    CONSTRAINT FK_CP_Cliente
+        FOREIGN KEY (id_cliente)
+        REFERENCES Cliente(id_cliente),
+
+    CONSTRAINT FK_CP_Projeto
+        FOREIGN KEY (id_projeto)
+        REFERENCES Projeto(id_projeto)
+);
+
+
+-- =========================================
+-- 7. INSERIR OS CARGOS
+-- =========================================
+
+INSERT INTO Cargo (nome_cargo, descricao, salario_base)
+VALUES
+('Analista', 'Responsavel', 5000.00),
+('Gerente', 'Coordena', 10000.00),
+('Desenvolvedor', 'Implementa', 7000.00);
+
+
+-- =========================================
+-- 8. INSERIR OS CONSULTORES
+-- =========================================
+
+INSERT INTO Consultor
+    (nome, cpf, especialidade, id_cargo)
+VALUES
+('Maria Silva', '12345678901', 'TI', 1),
+('Joao Souza', '98765432100', 'Gestao', 2),
+('Ana Costa', '11122233344', 'Desenvolvimento', 3),
+('Carlos Lima', '55566677788', 'TI', 1);
+
+
+-- =========================================
+-- 9. INSERIR OS CLIENTES
+-- =========================================
+
+INSERT INTO Cliente (razao_social, cnpj)
+VALUES
+('Empresa Alpha', '12345678000199'),
+('Empresa Beta', '98765432000155'),
+('Empresa Gamma', '11122233000177');
+
+
+-- =========================================
+-- 10. INSERIR OS PROJETOS
+-- =========================================
+
+INSERT INTO Projeto
+    (nome_projeto, valor_total_projeto, data_inicio, data_fim)
+VALUES
+('Sistema ERP', 200000.00, '2026-01-10', '2026-06-30'),
+('App Mobile', 150000.00, '2026-02-01', NULL),
+('Consultoria Financeira', 50000.00, '2026-03-15', '2026-04-15');
+
+
+-- =========================================
+-- 11. INSERIR AS ALOCACOES
+-- =========================================
+
+INSERT INTO Consultor_Projeto
+    (id_consultor, id_cliente, id_projeto,
+     horas_alocadas, valor_agregado)
+VALUES
+(1, 1, 1, 120, 30000.00),
+(2, 1, 1, 80, 20000.00),
+(3, 2, 2, 200, 40000.00),
+(1, 3, 3, 60, 10000.00);
+
+
+-- =========================================
+-- 12. LISTAR CARGOS E CONSULTORES
+-- =========================================
+
+SELECT c.nome_cargo, con.nome
+FROM Cargo c
+LEFT JOIN Consultor con
+    ON c.id_cargo = con.id_cargo;
+
+
+-- =========================================
+-- 13. QUANTIDADE DE CONSULTORES POR CARGO
+-- =========================================
+
+SELECT
+    c.nome_cargo,
+    COUNT(con.id_consultor) AS qtd_consultores
+FROM Cargo c
+LEFT JOIN Consultor con
+    ON c.id_cargo = con.id_cargo
+GROUP BY c.id_cargo, c.nome_cargo;
+
+
+-- =========================================
+-- 14. PROJETOS DE UM CONSULTOR
+-- =========================================
+
+SELECT con.nome, p.nome_projeto
+FROM Consultor_Projeto cp
+JOIN Consultor con
+    ON cp.id_consultor = con.id_consultor
+JOIN Projeto p
+    ON cp.id_projeto = p.id_projeto
+WHERE con.nome = 'Maria Silva';
+
+
+-- =========================================
+-- 15. CONSULTORES DE UM PROJETO
+-- =========================================
+
+SELECT p.nome_projeto, con.nome
+FROM Consultor_Projeto cp
+JOIN Consultor con
+    ON cp.id_consultor = con.id_consultor
+JOIN Projeto p
+    ON cp.id_projeto = p.id_projeto
+WHERE p.nome_projeto = 'Sistema ERP';
+
+
+-- =========================================
+-- 16. CLIENTES E SEUS PROJETOS
+-- =========================================
+
+SELECT cl.razao_social, p.nome_projeto
+FROM Cliente cl
+LEFT JOIN Consultor_Projeto cp
+    ON cl.id_cliente = cp.id_cliente
+LEFT JOIN Projeto p
+    ON cp.id_projeto = p.id_projeto;
+
+
+-- =========================================
+-- 17. CLIENTES SEM PROJETOS
+-- =========================================
+
+SELECT cl.razao_social
+FROM Cliente cl
+LEFT JOIN Consultor_Projeto cp
+    ON cl.id_cliente = cp.id_cliente
+WHERE cp.id_alocacao IS NULL;
+
+
+-- =========================================
+-- 18. CLIENTES COM PROJETOS ATIVOS EM UMA DATA
+-- =========================================
+
+SELECT DISTINCT cl.razao_social
+FROM Cliente cl
+JOIN Consultor_Projeto cp
+    ON cl.id_cliente = cp.id_cliente
+JOIN Projeto p
+    ON cp.id_projeto = p.id_projeto
+WHERE '2026-04-10' BETWEEN p.data_inicio
+    AND COALESCE(p.data_fim, '9999-12-31');
+
+
+-- =========================================
+-- 19. PROJETOS DE UM CLIENTE ESPECIFICO
+-- =========================================
+
+SELECT cl.razao_social, p.nome_projeto
+FROM Cliente cl
+JOIN Consultor_Projeto cp
+    ON cl.id_cliente = cp.id_cliente
+JOIN Projeto p
+    ON cp.id_projeto = p.id_projeto
+WHERE cl.razao_social = 'Empresa Alpha';
+
+
+-- =========================================
+-- 20. CONSULTORES SEM ALOCACOES
+-- =========================================
+
+SELECT *
+FROM Consultor
+WHERE id_consultor NOT IN (
+    SELECT id_consultor
+    FROM Consultor_Projeto
+);
+
+
+-- =========================================
+-- 21. CONSULTORES COM ALOCACOES
+-- =========================================
+
+SELECT id_consultor, nome
+FROM Consultor
+WHERE id_consultor IN (
+    SELECT id_consultor
+    FROM Consultor_Projeto
+);
+
+
+-- =========================================
+-- 22. EXEMPLO COM EXISTS
+-- =========================================
+
+SELECT c.id_consultor, c.nome
+FROM Consultor c
+WHERE EXISTS (
+    SELECT 1
+    FROM Consultor_Projeto cp
+    WHERE cp.id_consultor = c.id_consultor
+);
+
+
+-- =========================================
+-- 23. EXEMPLO COM NOT EXISTS
+-- =========================================
+
+SELECT c.id_consultor, c.nome
+FROM Consultor c
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Consultor_Projeto cp
+    WHERE cp.id_consultor = c.id_consultor
+);
+
+
+-- =========================================
+-- 24. ALOCACOES ACIMA DA MEDIA
+-- =========================================
+
+SELECT *
+FROM Consultor_Projeto
+WHERE valor_agregado > (
+    SELECT AVG(valor_agregado)
+    FROM Consultor_Projeto
+);
+
+
+-- =========================================
+-- 25. ALOCACAO COM MAIOR VALOR
+-- =========================================
+
+SELECT *
+FROM Consultor_Projeto
+WHERE valor_agregado = (
+    SELECT MAX(valor_agregado)
+    FROM Consultor_Projeto
+);
+
+
+-- =========================================
+-- 26. ALOCACAO COM MENOR VALOR
+-- =========================================
+
+SELECT *
+FROM Consultor_Projeto
+WHERE valor_agregado = (
+    SELECT MIN(valor_agregado)
+    FROM Consultor_Projeto
+);
+
+
+-- =========================================
+-- 27. CONSULTOR E CLIENTE DA ALOCACAO DE MAIOR VALOR
+-- =========================================
+
+SELECT
+    con.id_consultor,
+    con.nome,
+    cl.razao_social,
+    cp.id_projeto,
+    cp.valor_agregado
+FROM Consultor con
+JOIN Consultor_Projeto cp
+    ON con.id_consultor = cp.id_consultor
+JOIN Cliente cl
+    ON cl.id_cliente = cp.id_cliente
+WHERE cp.valor_agregado = (
+    SELECT MAX(valor_agregado)
+    FROM Consultor_Projeto
+);
+
+
+-- =========================================
+-- 28. CONFERIR OS DADOS
+-- =========================================
+
+SELECT * FROM Cargo;
+SELECT * FROM Consultor;
+SELECT * FROM Cliente;
+SELECT * FROM Projeto;
+SELECT * FROM Consultor_Projeto;

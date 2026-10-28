@@ -1,0 +1,109 @@
+##############################################################
+##Álgebra Linear Aplicada à Ciência de Dados - AULA 3
+##############################################################
+##Exemplo 4
+##############################################################
+import numpy as np
+
+v1 = np.array([3, -2, 6])
+v2 = np.array([-4, 5, -10])
+a = -3
+
+print('a) v1 + v2 = ', v1 + v2)
+print('\n')
+print('b) v1 + av2 = ', v1 + a*v2)
+print('\n')
+print('c) av1 = ', a*v1)
+
+##############################################################
+##Exemplo 5
+##############################################################
+import numpy as np
+from scipy import linalg
+
+A = np.array([[1, -3],
+              [2, 1]])
+B = np.array([[7],[7]])
+
+try:
+    C = linalg.solve(A, B)
+    print('Sim, é uma combinação linear!')
+    print('Os coeficientes são: c1 = %.2f e c2 = %.2f' % (C[0][0],C[1][0]))
+except (ValueError, linalg.LinAlgError):
+    print('Não é uma combinação linear (o sistema não tem solução ou tem infinitas).')
+
+##############################################################
+##Exemplo 6
+##############################################################
+import numpy as np
+from scipy import linalg
+
+A = np.array([[1, -1],
+              [2, 6],
+              [3, 3]])
+B = np.array([[-3],[2],[1]])
+
+try:
+    C = linalg.solve(A, B)
+    print('Sim, é uma combinação linear!')
+    print('Os coeficientes são: c1 = %.2f e c2 = %.2f' % (C[0][0],C[1][0])
+except (ValueError, linalg.LinAlgError):
+    print('Não é uma combinação linear (o sistema não tem solução ou tem infinitas).')
+
+##############################################################
+##Exemplo 7
+##############################################################
+import numpy as np
+
+v1 = np.array([-3, 4])
+v2 = np.array([5, -2])
+
+produto_interno = np.dot(v1,v2)
+
+print('v1.v2 = %.1f' % produto_interno)
+
+##############################################################
+##Exemplo 8
+##############################################################
+import numpy as np
+from scipy import linalg
+
+v1 = np.array([2, -1, 3])
+v2 = np.array([-1, 4, 2])
+
+norma_v1 = linalg.norm(v1)
+norma_v2 = linalg.norm(v2)
+
+dist_v1_v2 = linalg.norm(v1 - v2)
+
+print('||v1|| = %.2f' % norma_v1)
+print('||v2|| = %.2f' % norma_v2)
+print('dist(v1,v2) = %.2f' % dist_v1_v2)
+
+##############################################################
+##Exemplo 9
+##############################################################
+import pandas as pd
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import MinMaxScaler
+
+dados = {
+    'Idade': [20, 25, 30, 45, 50],
+    'Renda': [2, 8, 3, 9, 10],
+    'Risco': ['Alto', 'Baixo', 'Alto', 'Baixo', 'Baixo'],
+}
+df = pd.DataFrame(dados)
+
+normaliza = MinMaxScaler()
+X_norm = normaliza.fit_transform(df[['Idade', 'Renda']])
+y = df['Risco']
+
+novo_cliente = pd.DataFrame({'Idade': [35], 'Renda': [5]})
+novo_norm = normaliza.transform(novo_cliente)
+
+knn = KNeighborsClassifier(n_neighbors = 3, metric = 'euclidean')
+knn.fit(X_norm, y)
+
+res = knn.predict(novo_norm)
+print('\n')
+print('Classificação do risco:', res[0])

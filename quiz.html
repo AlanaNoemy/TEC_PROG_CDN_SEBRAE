@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Quiz: Python, POO, Git e GitHub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; padding-top: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { margin-bottom: 25px; border-radius: 10px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .card-header { color: white; border-radius: 10px 10px 0 0 !important; font-weight: 600; background-color: #0d6efd; }
+        
+        .option-label { display: block; padding: 14px; margin: 10px 0; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background-color: white;}
+        .option-label:hover { border-color: #b8daff; background-color: #f1f8ff; }
+        .correct-answer { background-color: #d1e7dd !important; border-color: #198754 !important; color: #0f5132; font-weight: 500;}
+        .incorrect-answer { background-color: #f8d7da !important; border-color: #dc3545 !important; color: #842029; font-weight: 500;}
+        
+        .rationale { display: none; margin-top: 15px; font-style: italic; font-size: 0.95rem; padding: 15px; border-left: 5px solid #0d6efd; background: #e9ecef; border-radius: 0 8px 8px 0;}
+        #floating-score { position: fixed; top: 20px; right: 20px; z-index: 1000; border-radius: 50px; opacity: 0.95; padding: 10px 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);}
+        
+        .pattern-badge { font-size: 0.8rem; background-color: rgba(255,255,255,0.2); border-radius: 20px; padding: 5px 10px; margin-left: 10px;}
+        .question-text { font-size: 1.1rem; line-height: 1.6; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<div id="floating-score" class="bg-dark text-white fw-bold">
+    Respostas: <span id="current-score" class="text-info">0</span> / <span id="total-score">0</span>
+</div>
+
+<div class="container pb-5">
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-dark">Master Quiz Interativo</h1>
+        <p class="lead text-secondary">Exercícios de Fixação: Git, GitHub, Lógica e Orientação a Objetos em Python</p>
+    </div>
+
+    <div class="alert alert-success text-center mb-5 shadow-sm" role="alert">
+        <strong>Atividade Prática:</strong> Selecione as categorias para focar seus estudos ou responda todas as questões para testar seus conhecimentos globais!
+    </div>
+
+    <div class="card p-4 mb-5 shadow-sm text-center">
+        <h5 class="mb-3 text-secondary">Filtro de Temas:</h5>
+        <div class="row g-3 justify-content-center">
+            <div class="col-md-6">
+                <select id="topicFilter" class="form-select border-primary" onchange="renderQuestions()">
+                    <option value="all">📚 Mostrar Todas as Questões</option>
+                    <option value="Git">⚙️ Git</option>
+                    <option value="GitHub">🐙 GitHub</option>
+                    <option value="Funções">🛠️ Funções (Python)</option>
+                    <option value="Laços">🔁 Laços de Repetição (Python)</option>
+                    <option value="Decisão">⚖️ Estruturas de Decisão (Python)</option>
+                    <option value="POO">📦 POO (Python)</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-primary w-100" onclick="checkAllAnswers()">✅ Corrigir Questionário</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-container">
+        </div>
+
+    <div id="final-result" class="card shadow text-center p-5 d-none mt-5 border-0 bg-light">
+        <h2 class="mb-3">Resultado Final</h2>
+        <div id="score-percent" class="display-1 fw-bold mb-3">0%</div>
+        <p id="score-text" class="fs-4"></p>
+        <button onclick="location.reload()" class="btn btn-outline-primary btn-lg mt-4 w-50 mx-auto">Tentar Novamente</button>
+    </div>
+</div>
+
+<script>
+    const questionsList = [
+        // ==========================================
+        // TEMA: GIT
+        // ==========================================
+        { q: "O que é o Git?", cat: "Git", options: [
+            { text: "Um sistema de controle de versão distribuído.", correct: true, rat: "O Git é desenhado para rastrear mudanças no código e coordenar o trabalho entre programadores em um ambiente distribuído." },
+            { text: "Uma rede social para desenvolvedores.", correct: false, rat: "Isso se aproxima mais do GitHub, não do Git em si." },
+            { text: "Uma linguagem de programação de script.", correct: false, rat: "Git é uma ferramenta de terminal/versão, não uma linguagem de programação." },
+            { text: "Um banco de dados relacional.", correct: false, rat: "Embora armazene dados e histórico, o Git não é um banco de dados relacional genérico." }
+        ]},
+        { q: "Qual comando é usado para iniciar um novo repositório Git local?", cat: "Git", options: [
+            { text: "git init", correct: true, rat: "O comando 'git init' cria um repositório Git vazio ou reinicializa um já existente no diretório." },
+            { text: "git start", correct: false, rat: "Este comando não existe no Git padrão." },
+            { text: "git new", correct: false, rat: "Este comando não existe no Git padrão." },
+            { text: "git clone", correct: false, rat: "O 'clone' clona um repositório já existente remoto; 'init' inicia um do zero localmente." }
+        ]},
+        { q: "Qual comando grava permanentemente as alterações no histórico do repositório local?", cat: "Git", options: [
+            { text: "git commit", correct: true, rat: "O 'commit' cria um novo ponto de histórico com as alterações previamente preparadas (staged)." },
+            { text: "git add", correct: false, rat: "O 'add' apenas move as alterações para o staging area, mas não salva no histórico definitivo." },
+            { text: "git push", correct: false, rat: "O 'push' envia os commits locais para o repositório remoto." },
+            { text: "git save", correct: false, rat: "Este comando não faz parte da suíte do Git." }
+        ]},
+        { q: "Para que serve o comando 'git status'?", cat: "Git", options: [
+            { text: "Mostrar o estado da árvore de trabalho e do staging area.", correct: true, rat: "Informa quais arquivos foram modificados, estão preparados para commit ou não estão sendo rastreados." },
+            { text: "Ver o histórico de commits do repositório.", correct: false, rat: "Isso é feito com o comando 'git log'." },
+            { text: "Apagar arquivos não rastreados do repositório.", correct: false, rat: "Isso é feito com o comando 'git clean'." },
+            { text: "Mostrar as linhas de código alteradas em um arquivo.", correct: false, rat: "Isso é feito com o comando 'git diff'." }
+        ]},
+        { q: "Como você desfaz alterações locais em um arquivo antes de adicioná-las ao staging area?", cat: "Git", options: [
+            { text: "git restore <arquivo> ou git checkout -- <arquivo>", correct: true, rat: "Ambos os comandos descartam alterações no diretório de trabalho, restaurando o arquivo para o último commit." },
+            { text: "git revert <arquivo>", correct: false, rat: "O 'revert' é usado para reverter um commit inteiro criando um novo, não para arquivos soltos não-commitados." },
+            { text: "git reset <arquivo>", correct: false, rat: "O 'reset' remove o arquivo do staging, mas preserva a alteração no diretório de trabalho." },
+            { text: "git clean <arquivo>", correct: false, rat: "O 'clean' remove arquivos não rastreados, mas não restaura modificações de arquivos já rastreados." }
+        ]},
+
+        // ==========================================
+        // TEMA: GITHUB
+        // ==========================================
+        { q: "Qual é a principal diferença entre Git e GitHub?", cat: "GitHub", options: [
+            { text: "Git é o software de controle de versão; GitHub é a plataforma de hospedagem em nuvem.", correct: true, rat: "O Git opera localmente através do terminal, enquanto o GitHub hospeda repositórios na internet facilitando a colaboração." },
+            { text: "Git é para projetos pequenos e GitHub para projetos grandes.", correct: false, rat: "O tamanho do projeto não dita o uso; ambos são usados em conjunto independentemente da escala." },
+            { text: "Git é pago e GitHub é totalmente gratuito.", correct: false, rat: "O Git é open-source e gratuito. O GitHub possui versões gratuitas e corporativas pagas." },
+            { text: "Não há diferença, são sinônimos.", correct: false, rat: "São ferramentas de empresas/entidades distintas com propósitos diferentes." }
+        ]},
+        { q: "O que é um 'Pull Request' (PR) no GitHub?", cat: "GitHub", options: [
+            { text: "Uma solicitação para que o código de uma branch seja revisado e mesclado em outra.", correct: true, rat: "É o mecanismo principal de revisão de código e colaboração em equipes de desenvolvimento." },
+            { text: "Um comando para baixar atualizações do servidor.", correct: false, rat: "Baixar atualizações do servidor para a máquina local é feito via 'git pull'." },
+            { text: "Uma cópia exata de um repositório de terceiros.", correct: false, rat: "Isso é conhecido como 'Fork'." },
+            { text: "Uma solicitação de suporte técnico à plataforma.", correct: false, rat: "Pull Requests são relacionados exclusivamente a código, não a suporte." }
+        ]},
+        { q: "O que significa realizar um 'Fork' no GitHub?", cat: "GitHub", options: [
+            { text: "Criar uma cópia pessoal do repositório de outro usuário na sua própria conta.", correct: true, rat: "Permite que você altere livremente o código sem afetar o projeto original do autor." },
+            { text: "Dividir uma branch em duas branches independentes.", correct: false, rat: "Isso não é referenciado como 'fork' na plataforma." },
+            { text: "Apagar um repositório da sua conta permanentemente.", correct: false, rat: "Isso é feito nas configurações de exclusão (Delete repository)." },
+            { text: "Bloquear usuários indesejados de colaborarem em um repositório.", correct: false, rat: "Isso envolve bloqueios administrativos, não fork." }
+        ]},
+        { q: "Qual o propósito principal do arquivo '.gitignore'?", cat: "GitHub", options: [
+            { text: "Especificar arquivos e diretórios que o Git deve ignorar e não rastrear.", correct: true, rat: "É essencial para evitar subir senhas, arquivos binários, dependências locais (node_modules) ou configurações específicas da IDE." },
+            { text: "Deletar automaticamente arquivos inúteis do sistema.", correct: false, rat: "O Git não apaga arquivos automaticamente, apenas deixa de olhá-los." },
+            { text: "Ignorar erros de compilação durante o envio ao servidor.", correct: false, rat: "O Git é agnóstico a erros de sintaxe ou compilação de código." },
+            { text: "Ocultar o repositório de outros usuários.", correct: false, rat: "A visibilidade é configurada como Pública/Privada diretamente nas configurações do repositório web." }
+        ]},
+        { q: "Como se enviam os commits feitos localmente para um repositório hospedado no GitHub?", cat: "GitHub", options: [
+            { text: "git push", correct: true, rat: "O comando 'git push' transfere os novos commits da sua máquina para o servidor remoto." },
+            { text: "git pull", correct: false, rat: "O 'pull' faz a operação inversa: puxa do remoto para o local." },
+            { text: "git upload", correct: false, rat: "Não existe comando 'git upload' na suíte padrão do Git." },
+            { text: "git send", correct: false, rat: "Não existe comando 'git send' para envio de repositórios ao GitHub." }
+        ]},
+
+        // ==========================================
+        // TEMA: FUNÇÕES (PYTHON)
+        // ==========================================
+        { q: "Em Python, qual palavra-chave é utilizada para iniciar a definição de uma função?", cat: "Funções", options: [
+            { text: "def", correct: true, rat: "A palavra 'def' (de 'define') indica o início da estrutura da função, como em: def minha_funcao():" },
+            { text: "function", correct: false, rat: "Utilizada em linguagens como JavaScript e PHP, não em Python." },
+            { text: "fun", correct: false, rat: "Utilizada no Kotlin, não no Python." },
+            { text: "define", correct: false, rat: "Esta palavra não faz parte da sintaxe de criação de funções em Python." }
+        ]},
+        { q: "Qual a finalidade da instrução 'return' dentro de uma função Python?", cat: "Funções", options: [
+            { text: "Encerrar a execução da função e enviar um valor de volta para quem a chamou.", correct: true, rat: "Caso o 'return' seja omitido, a função retornará o tipo especial 'None' por padrão." },
+            { text: "Imprimir um valor no console de texto.", correct: false, rat: "Para saídas no console ou terminal, utilizamos 'print()'." },
+            { text: "Retornar a execução para a primeira linha do script.", correct: false, rat: "O fluxo volta especificamente para o ponto do código onde a função foi invocada." },
+            { text: "Reiniciar o laço de repetição mais próximo.", correct: false, rat: "Isso descreve melhor o comportamento da instrução 'continue'." }
+        ]},
+        { q: "É possível que uma função em Python retorne múltiplos valores simultaneamente?", cat: "Funções", options: [
+            { text: "Sim, os valores são retornados empacotados em uma estrutura de tupla.", correct: true, rat: "Exemplo: return valor1, valor2. O programa que chamou pode desempacotar fazendo: a, b = funcao()." },
+            { text: "Não, funções Python só podem retornar estritamente um valor.", correct: false, rat: "O Python suporta e incentiva múltiplos retornos via tuplas implícitas." },
+            { text: "Sim, mas apenas se estiverem contidos explicitamente em uma lista [ ].", correct: false, rat: "Pode-se usar listas, mas o recurso nativo de separar por vírgulas gera tuplas." },
+            { text: "Não, isso causará um 'MultipleReturnError'.", correct: false, rat: "Essa exceção não existe, o código é perfeitamente válido." }
+        ]},
+        { q: "Como chamamos as funções declaradas em uma única linha, que não recebem um nome formal e usam a palavra-chave 'lambda'?", cat: "Funções", options: [
+            { text: "Funções anônimas", correct: true, rat: "As funções lambda são usadas para operações matemáticas rápidas ou passadas como argumentos (callbacks) em funções como map() ou filter()." },
+            { text: "Funções recursivas", correct: false, rat: "Recursão é o conceito de uma função que invoca a si própria, independentemente da sintaxe." },
+            { text: "Funções geradoras", correct: false, rat: "Geradoras são criadas utilizando a palavra-chave 'yield' ao invés de 'return'." },
+            { text: "Funções decoradoras", correct: false, rat: "Decoradores são funções (frequentemente usando o símbolo @) que embrulham e modificam outras funções." }
+        ]},
+        { q: "Quando definimos uma função como: `def calcular(a, b=10):`, como chamamos o parâmetro 'b'?", cat: "Funções", options: [
+            { text: "Parâmetro opcional / com valor padrão (default).", correct: true, rat: "Se nenhum argumento for enviado para 'b' na chamada, ele assumirá o valor 10 automaticamente." },
+            { text: "Parâmetro obrigatório estático.", correct: false, rat: "Ele não é obrigatório justamente porque possui um valor de escape (fallback)." },
+            { text: "Variável global imutável.", correct: false, rat: "Atribuir valor na assinatura da função não a torna uma variável global." },
+            { text: "Argumento de comprimento variável.", correct: false, rat: "Comprimento variável usa a sintaxe *args ou **kwargs." }
+        ]},
+
+        // ==========================================
+        // TEMA: LAÇOS DE REPETIÇÃO (PYTHON)
+        // ==========================================
+        { q: "Qual estrutura de repetição é a escolha mais apropriada quando já sabemos previamente o número de iterações que o código deve realizar?", cat: "Laços", options: [
+            { text: "for", correct: true, rat: "O 'for' em Python é desenhado para iterar sobre coleções ou intervalos predefinidos numéricos (via função range)." },
+            { text: "while", correct: false, rat: "O 'while' é melhor para situações não determinísticas, onde repetimos enquanto uma condição booleana for verdadeira." },
+            { text: "do-while", correct: false, rat: "A estrutura 'do-while' (faça-enquanto) não existe nativamente na sintaxe do Python." },
+            { text: "switch", correct: false, rat: "Switch (ou match/case) é uma estrutura condicional, não de repetição." }
+        ]},
+        { q: "O que acontece ao acionar a instrução 'break' dentro de um laço de repetição?", cat: "Laços", options: [
+            { text: "Interrompe imediatamente e encerra por completo o laço atual.", correct: true, rat: "O fluxo de execução abandona a estrutura de repetição e salta para a próxima linha de código fora dela." },
+            { text: "Pula apenas a etapa atual e vai direto para a próxima iteração.", correct: false, rat: "Este é o comportamento causado pela instrução 'continue'." },
+            { text: "Para todo o script e sai do interpretador Python.", correct: false, rat: "Apenas saímos do script com bibliotecas específicas, como sys.exit()." },
+            { text: "Abrevia o laço até a metade das iterações.", correct: false, rat: "O corte ocorre no momento exato em que o break é lido, não existindo conceito de 'metade'." }
+        ]},
+        { q: "O comando `for i in range(2, 5):` irá iterar a variável 'i' com quais valores?", cat: "Laços", options: [
+            { text: "2, 3, 4", correct: true, rat: "A função range(início, fim) inclui o limite inicial, mas exclui sempre o limite final." },
+            { text: "2, 3, 4, 5", correct: false, rat: "Lembre-se que o último valor do range em Python nunca é atingido." },
+            { text: "1, 2, 3, 4, 5", correct: false, rat: "Se não declarássemos o 2, ele começaria do 0, não do 1." },
+            { text: "Apenas o 2 e o 5.", correct: false, rat: "O range gera uma progressão, não atua como uma lista de extremos." }
+        ]},
+        { q: "No Python, o que ocorre quando usamos um bloco 'else' vinculado a um 'for' ou 'while'?", cat: "Laços", options: [
+            { text: "O código no 'else' será executado apenas se o laço terminar naturalmente (sem encontrar um break).", correct: true, rat: "Este recurso é muito comum em algoritmos de busca: o 'else' indica que o elemento procurado não foi achado." },
+            { text: "O código no 'else' é acionado toda vez que uma iteração falha em executar.", correct: false, rat: "Isso demandaria blocos de tratamento de exceção (try/except)." },
+            { text: "Substitui automaticamente a última volta do laço.", correct: false, rat: "Ele roda *após* todas as voltas terem sido concluídas com êxito." },
+            { text: "Gera um erro SyntaxError.", correct: false, rat: "Embora incomum em outras linguagens, em Python laços suportam 'else'." }
+        ]},
+        { q: "Qual o efeito prático da instrução 'continue' inserida no meio de um bloco de laço de repetição?", cat: "Laços", options: [
+            { text: "Pula todas as instruções restantes abaixo dela e inicia imediatamente a próxima volta do laço.", correct: true, rat: "Evita adicionar muitos ifs aninhados apenas para ignorar registros indesejados." },
+            { text: "Abandona definitivamente o laço atual.", correct: false, rat: "Esta tarefa cabe exclusivamente ao 'break'." },
+            { text: "Gera uma exceção que o código ignora.", correct: false, rat: "Comandos de controle de laço operam em nível estrutural e não causam exceções." },
+            { text: "Reinicia as variáveis do laço para zero.", correct: false, rat: "O controle avança um passo lógico, sem limpar variáveis globais." }
+        ]},
+
+        // ==========================================
+        // TEMA: ESTRUTURAS DE DECISÃO (PYTHON)
+        // ==========================================
+        { q: "Para encadear e testar múltiplas condições exclusivas consecutivamente num fluxo condicional, usamos qual palavra-chave em Python?", cat: "Decisão", options: [
+            { text: "elif", correct: true, rat: "O 'elif' (abreviação de else if) previne aninhamentos de ifs sucessivos, mantendo o código alinhado." },
+            { text: "elseif", correct: false, rat: "Comum em linguagens C-like e PHP, mas gera erro de sintaxe em Python." },
+            { text: "else if", correct: false, rat: "Esta escrita separada exigiria tabulações adicionais formando blocos aninhados, e não uma corrente simples." },
+            { text: "case", correct: false, rat: "Existe o match/case (novo no Python 3.10), mas na base estrutural clássica usa-se o elif." }
+        ]},
+        { q: "O operador lógico usado para garantir que DUAS condições testadas sejam simultaneamente verdadeiras em Python é:", cat: "Decisão", options: [
+            { text: "and", correct: true, rat: "Python utiliza palavras puras (and, or, not) ao invés de símbolos sintáticos. Ambas as premissas precisam ser True." },
+            { text: "or", correct: false, rat: "O 'or' solicita que apenas uma das opções seja True." },
+            { text: "not", correct: false, rat: "O 'not' apenas inverte o sinal booleano (True vira False)." },
+            { text: "&&", correct: false, rat: "Símbolo amplamente utilizado em C++ ou JS, mas em Python resultará em um SyntaxError." }
+        ]},
+        { q: "Como o interpretador Python sabe que um determinado grupo de linhas pertence ao escopo interno de um 'if'?", cat: "Decisão", options: [
+            { text: "Através da indentação (espaços ou tabulações).", correct: true, rat: "A indentação é lei no Python. Diferentes níveis ditam os escopos estruturais." },
+            { text: "Usando chaves de abertura e fechamento { }.", correct: false, rat: "Em Python, as chaves são primariamente utilizadas para criar Dicionários e Sets." },
+            { text: "Sinalizando o início com 'begin' e o fim com 'end'.", correct: false, rat: "Esta prática vem do Pascal e não é compatível com Python." },
+            { text: "Pelos dois pontos (:) colocados no final de cada linha subordinada.", correct: false, rat: "Os dois pontos vão apenas na declaração do IF, o resto é pela indentação." }
+        ]},
+        { q: "Se quisermos verificar se o valor da variável 'a' é diferente do valor de 'b', utilizamos qual operador?", cat: "Decisão", options: [
+            { text: "!=", correct: true, rat: "O operador de diferença em Python é composto pela exclamação e sinal de igual. Ex: if a != b:" },
+            { text: "==", correct: false, rat: "Este valida se são EXATAMENTE iguais." },
+            { text: "<>", correct: false, rat: "Era válido no saudoso Python 2, mas foi banido e descontinuado no Python 3." },
+            { text: "!==", correct: false, rat: "Desigualdade estrita (verifica tipo e valor ao mesmo tempo) não é um operador do Python." }
+        ]},
+        { q: "Qual é a sintaxe correta para aplicar um 'If Ternário' (expressão condicional) numa única linha em Python?", cat: "Decisão", options: [
+            { text: "resultado = 'Sim' if teste == True else 'Não'", correct: true, rat: "O valor esperado verdadeiro vem no início, seguido da palavra if, sua premissa e, por fim, o cenário falso em else." },
+            { text: "resultado = (teste == True) ? 'Sim' : 'Não'", correct: false, rat: "A abordagem com interrogação e dois pontos é característica do C, Java e PHP." },
+            { text: "resultado = if teste == True: 'Sim' else: 'Não'", correct: false, rat: "A tentativa de usar dois-pontos em atribuição de linha única gera erro lógico." },
+            { text: "resultado = 'Sim' else 'Não' if teste == True", correct: false, rat: "As posições gramaticais foram estruturadas fora de ordem nesta opção." }
+        ]},
+
+        // ==========================================
+        // TEMA: POO BÁSICO EM PYTHON
+        // ==========================================
+        { q: "Como definimos a 'planta baixa' ou molde principal que será usado para construir objetos em POO?", cat: "POO", options: [
+            { text: "Através da palavra-chave 'class'.", correct: true, rat: "Classes englobam os métodos (comportamentos) e atributos (estado) que compõem entidades sistêmicas. Ex: class Pessoa:" },
+            { text: "Através da palavra 'object'.", correct: false, rat: "Todos os dados são derivados de 'object', mas a estrutura que modelamos leva o nome de 'class'." },
+            { text: "Usando a função interna construct().", correct: false, rat: "Não existe tal construção padrão." },
+            { text: "Com a definição especial 'struct'.", correct: false, rat: "Structs estão presentes na linguagem C, orientando agrupamentos rudimentares de variáveis." }
+        ]},
+        { q: "Dentro de um método pertencente a uma classe, qual a função vital do parâmetro 'self'?", cat: "POO", options: [
+            { text: "Referenciar o próprio objeto específico que está invocando o método no momento.", correct: true, rat: "Isto garante que ao acionar carro1.acelerar() ou carro2.acelerar(), o motor modifique o status apenas do veículo correto." },
+            { text: "Apontar para a classe base em situações de herança.", correct: false, rat: "Nesta ocorrência, usaríamos o construto super()." },
+            { text: "Atuar como variável estática visível em instâncias simultâneas.", correct: false, rat: "Atributos estáticos de classe não precisam do self, bastando associá-los diretamente ao nome da classe." },
+            { text: "Indicar ao interpretador que este método é público.", correct: false, rat: "O controle de escopo (público/privado) dá-se por sintaxes baseadas em sublinhados (_)." }
+        ]},
+        { q: "Que nome recebe o método mágico em Python que funciona como o 'Construtor' primário, inicializando os dados quando um objeto nasce?", cat: "POO", options: [
+            { text: "__init__", correct: true, rat: "Chamado automaticamente no instante do instanciamento. Exemplo: p = Pessoa() dispara o __init__ internamente." },
+            { text: "__main__", correct: false, rat: "Esta keyword averigua se o script local é o núcleo de execução ou foi importado por terceiros." },
+            { text: "__new__", correct: false, rat: "O __new__ existe, mas ele é o alocador na memória (Singleton meta), e não o inicializador de dados que os desenvolvedores usam diariamente." },
+            { text: "__construct__", correct: false, rat: "Linguagens como PHP que aproveitam esta sintaxe, não o Python." }
+        ]},
+        { q: "Como a comunidade Python convencionou a proteção e encapsulamento dos atributos de uma classe (deixando-os restritos/privados)?", cat: "POO", options: [
+            { text: "Iniciando os nomes das variáveis e métodos com sublinhado duplo (__) ou simples (_).", correct: true, rat: "O simples indica 'Uso Interno - Não Mexa', já o duplo injeta 'Name Mangling', adulterando o acesso direto." },
+            { text: "Declarando a tag 'private' ou 'protected' antes deles.", correct: false, rat: "Python aposta no princípio adulto de confiança. Não há travas arquiteturais formais em nível de compilação como Java ou C#." },
+            { text: "Trancando as variáveis no último bloco inferior da classe.", correct: false, rat: "Ordem vertical não tem correlação com permissões hierárquicas." },
+            { text: "Adicionando decorators @private acima das variáveis.", correct: false, rat: "Você até pode achar bibliotecas externas que emulem isso, mas não faz parte do Python nativo." }
+        ]},
+        { q: "No glossário de Orientação a Objetos, o que significa aplicar o princípio da Herança?", cat: "POO", options: [
+            { text: "Criar uma classe filha que absorve e expande todos os atributos e métodos de uma classe mãe já existente.", correct: true, rat: "Um clássico exemplo de reuso de código, criando a premissa de 'é-um'. Ex: Uma classe Cachorro herda propriedades de Mamifero." },
+            { text: "Esconder complexidade interna disponibilizando apenas as funcionalidades seguras via interface.", correct: false, rat: "Este é o conceito fundamental de Encapsulamento, não de Herança." },
+            { text: "Possibilitar que métodos similares atuem de maneiras totalmente distintas de acordo com quem for ativado.", correct: false, rat: "Essa é a exata tradução comportamental do conceito de Polimorfismo." },
+            { text: "Instanciar simultaneamente clones em memória interligados.", correct: false, rat: "Referente a instâncias múltiplas, mas que em nada tange as árvores de derivação de classes." }
+        ]}
+    ];
+
+    function renderQuestions() {
+        const filter = document.getElementById('topicFilter').value;
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = ''; // Limpa as antigas
+        
+        // Filtra pelo select
+        let filteredQuestions = questionsList;
+        if (filter !== 'all') {
+            filteredQuestions = questionsList.filter(q => q.cat === filter);
+        }
+        
+        filteredQuestions.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'card mb-4';
+            
+            // Atribui uma cor baseada no tema
+            let badgeClass = 'bg-primary';
+            if (q.cat === 'Git' || q.cat === 'GitHub') badgeClass = 'bg-secondary';
+            if (q.cat === 'POO') badgeClass = 'bg-info text-dark';
+            
+            let html = `
+                <div class="card-header bg-primary d-flex justify-content-between align-items-center">
+                    <span>Questão ${index + 1}</span>
+                    <span class="badge ${badgeClass} fs-6">${q.cat}</span>
+                </div>
+                <div class="card-body">
+                    <p class="question-text fw-bold mb-4">${q.q}</p>
+                    <div class="options-container">
+            `;
+            
+            q.options.forEach((opt, optIndex) => {
+                const uniqueId = `q${index}_opt${optIndex}`;
+                html += `
+                    <label class="option-label" for="${uniqueId}">
+                        <input class="form-check-input me-2" type="radio" name="question_${index}" id="${uniqueId}" value="${opt.correct}" data-rat="${opt.rat}">
+                        ${opt.text}
+                    </label>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    <div class="rationale" id="rat_${index}"></div>
+                </div>
+            `;
+            
+            card.innerHTML = html;
+            container.appendChild(card);
+        });
+        
+        // Atualiza a barra de contagem e esconde o resultado se tiver filtrado
+        document.getElementById('total-score').innerText = filteredQuestions.length;
+        document.getElementById('final-result').classList.add('d-none');
+    }
+
+    function checkAllAnswers() {
+        const container = document.getElementById('quiz-container');
+        const cards = container.querySelectorAll('.card');
+        let score = 0;
+        let totalRendered = cards.length;
+        
+        cards.forEach((card, index) => {
+            const selected = card.querySelector(`input[name="question_${index}"]:checked`);
+            const rationaleBox = card.querySelector(`#rat_${index}`);
+            rationaleBox.style.display = 'block';
+            
+            // Limpeza visual
+            card.querySelectorAll('.option-label').forEach(lbl => lbl.classList.remove('correct-answer', 'incorrect-answer'));
+            card.classList.remove('border', 'border-warning', 'border-success', 'border-danger');
+            
+            if (selected) {
+                const isCorrect = selected.value === "true";
+                const ratText = selected.getAttribute('data-rat');
+                
+                if (isCorrect) {
+                    score++;
+                    selected.parentElement.classList.add('correct-answer');
+                    rationaleBox.innerHTML = `<strong>Correto!</strong> ${ratText}`;
+                    rationaleBox.style.borderLeftColor = '#198754';
+                    card.classList.add('border', 'border-success');
+                } else {
+                    selected.parentElement.classList.add('incorrect-answer');
+                    const correctInput = card.querySelector(`input[value="true"]`);
+                    if(correctInput) correctInput.parentElement.classList.add('correct-answer');
+                    
+                    rationaleBox.innerHTML = `<strong>Incorreto!</strong> ${ratText} <br><br><em>Justificativa da certa: ${correctInput ? correctInput.getAttribute('data-rat') : ''}</em>`;
+                    rationaleBox.style.borderLeftColor = '#dc3545';
+                    card.classList.add('border', 'border-danger');
+                }
+            } else {
+                const correctInput = card.querySelector(`input[value="true"]`);
+                if(correctInput) correctInput.parentElement.classList.add('correct-answer');
+                rationaleBox.innerHTML = `<strong>Não respondida.</strong> Leia a justificativa: ${correctInput ? correctInput.getAttribute('data-rat') : ''}`;
+                card.classList.add('border', 'border-warning');
+            }
+        });
+
+        // Contabiliza score flutuante
+        document.getElementById('current-score').innerText = score;
+
+        // Exibe bloco final de resultado
+        const resultDiv = document.getElementById('final-result');
+        const percent = Math.round((score / totalRendered) * 100) || 0;
+        
+        resultDiv.classList.remove('d-none');
+        document.getElementById('score-percent').innerText = `${percent}%`;
+        document.getElementById('score-text').innerText = `Você acertou ${score} de um total de ${totalRendered} questões exibidas.`;
+        
+        if(percent >= 80) document.getElementById('score-percent').className = "display-1 fw-bold mb-3 text-success";
+        else if(percent >= 50) document.getElementById('score-percent').className = "display-1 fw-bold mb-3 text-warning";
+        else document.getElementById('score-percent').className = "display-1 fw-bold mb-3 text-danger";
+        
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Ao iniciar a tela
+    window.onload = function() {
+        renderQuestions();
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
